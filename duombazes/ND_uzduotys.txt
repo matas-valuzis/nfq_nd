@@ -1,0 +1,128 @@
+﻿Pratybos
+1. Sukurkite duomenų bazę;
+
+CREATE DATABASE books;
+
+2. Suimportuokite paruoštą duomenų bazės prototipą.
+
+3. Atlikite šiuos veiksmus:
+a)	Papildykite autorių lentelę įrašais.
+
+INSERT INTO `Authors` (`name`) VALUES
+('Chris Smith2'),
+('John Johnson');
+
+b)	Papildykite knygų lentelę, įrašais apie knygas, kurių autorius įrašėte prieš tai.
+
+INSERT INTO `Books` (`authorId`, `title`, `year`) VALUES
+(8, 'Programming RUST 3.0, 2nd Edition', 2012),
+(9, 'Super cool book, 2nd Edition', 2012);
+
+c)	Išrinkite knygų informaciją prijungdami autorius iš autorių lentelės.
+
+SELECT a.name, b.title, b.year 
+FROM `books` as b LEFT JOIN `authors` as a 
+ON b.authorId = a.authorId;
+
+d)	Pakeiskite vienos knygos autorių į kitą.
+
+UPDATE `books` SET authorID = 7 WHERE bookId = 7
+
+e)	Suskaičiuokite kiek knygų kiekvieno autoriaus yra duomenų bazėje (įtraukdami autorius kurie neturi knygų, bei neitraukdami šių autorių).
+
+SELECT name, count(bookId) 
+FROM `authors` as a 
+LEFT JOIN `books` as b 
+ON a.authorId = b.authorId 
+GROUP BY name
+
+SELECT name, count(bookId) 
+FROM `authors` as a 
+LEFT JOIN `books` as b 
+ON a.authorId = b.authorId 
+WHERE b.bookId IS NOT null
+GROUP BY name
+
+f)	Pašalinkite jūsų suvestus autorius.
+
+DELETE FROM `authors` 
+WHERE authorId IN (8, 9)
+
+g)	Pašalinkite knygas, kurios neturi autorių.
+
+DELETE b
+FROM `books` as b 
+LEFT JOIN `authors` as a 
+ON a.authorId = b.authorId
+WHERE a.authorId IS NULL
+
+4. Papildykite duomenų bazę kad būtų galima:
+a)	Suskirstyti knygas į žanrus.
+
+CREATE TABLE IF NOT EXISTS `Genres` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,  
+  `name` varchar(100) COLLATE utf8_general_ci NOT NULL,  
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1;
+
+INSERT INTO `Genres` (`name`) VALUES
+('Unknown'),
+('Triller'),
+('Sci-fi');
+
+ALTER TABLE `books` 
+ADD COLUMN `genreId` int(11) DEFAULT 1;
+
+UPDATE `books`
+SET genreId = 3
+WHERE title LIKE '%Edition%'
+
+b)	Knygos gali turėti vieną ir daugiau autorių.
+
+CREATE TABLE IF NOT EXISTS `author_books` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,  
+  `authorId` int(11) DEFAULT NULL,
+  `bookId` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1;
+
+c)	Sutvarkyti duomenų bazės duomenis, jei reikia papildykite naujais.
+
+INSERT INTO `author_books` (authorId, bookId)
+SELECT a.authorId, b.bookId
+FROM `books` as b
+LEFT JOIN `authors` as a
+ON b.authorId = a.authorId;
+
+INSERT INTO `author_books` (authorId, bookId)
+VALUES
+(3, 5),
+(5, 1);
+
+ALTER TABLE `books` 
+DROP COLUMN authorId;
+
+d)	Išrinkite visas knygas su jų autoriais. (autorius, jei jų daugiau nei veinas atskirkite kableliais)
+
+SELECT b.title, GROUP_CONCAT(a.name SEPARATOR ' ,') as 'Authors'
+FROM `books` as b
+LEFT JOIN `author_books` as ab 
+ON ab.bookId = b.bookId
+LEFT JOIN `authors` as a 
+ON ab.authorId = a.authorId
+GROUP BY b.title
+
+e)	Papildykite knygų lentelę, kad galetumėte išsaugoti orginalų knygos pavadinimą. (Pavadinime išsaugokite, lietuviškas raides kaip ą,ė,š ir pan.)
+
+ALTER TABLE `books`
+CHARACTER SET utf8,
+COLLATE utf8_general_ci;
+
+ALTER TABLE `books`
+CHANGE COLUMN title title varchar(255) 
+CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+5. Paruoškite duomenų bazės kopiją.
+books.sql
+6. Paruoškite duomenų bazės atnaujinimo skriptą. (struktūros ir pradinių duomenų).
+renew.sql
